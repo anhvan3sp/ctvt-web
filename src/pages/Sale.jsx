@@ -6,6 +6,17 @@ function Sale() {
   const token = localStorage.getItem("access_token")
   const headers = { Authorization: `Bearer ${token}` }
 
+  // ---- decode JWT để lấy mã nhân viên (sub) ----
+  let maNV = ""
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]))
+      maNV = payload.sub || ""
+    } catch (e) {
+      console.log("Không đọc được token")
+    }
+  }
+
   const [customers, setCustomers] = useState([])
   const [products, setProducts] = useState([])
   const [warehouses, setWarehouses] = useState([])
@@ -25,14 +36,51 @@ function Sale() {
 
   useEffect(() => {
 
+    // ---- load khách hàng ----
     axios.get("https://ctvt-core-api.onrender.com/customer/", { headers })
       .then(res => setCustomers(res.data))
 
+    // ---- load sản phẩm + mặc định Gas 12 ----
     axios.get("https://ctvt-core-api.onrender.com/products/", { headers })
-      .then(res => setProducts(res.data))
+      .then(res => {
 
+        const ps = res.data
+        setProducts(ps)
+
+        const gas12 = ps.find(p =>
+          p.ten_sp?.toLowerCase().includes("12")
+        )
+
+        if (gas12) {
+          setItems([
+            { ma_sp: gas12.ma_sp, so_luong: 1, don_gia: 0 }
+          ])
+        }
+
+      })
+
+    // ---- load kho + tự chọn theo nhân viên ----
     axios.get("https://ctvt-core-api.onrender.com/warehouses/", { headers })
-      .then(res => setWarehouses(res.data))
+      .then(res => {
+
+        const ws = res.data
+        setWarehouses(ws)
+
+        if (maNV === "thao") {
+          const k = ws.find(w =>
+            w.ten_kho?.toLowerCase().includes("lương")
+          )
+          if (k) setMaKho(k.ma_kho)
+        }
+
+        if (maNV === "thuy" || maNV === "cong") {
+          const k = ws.find(w =>
+            w.ten_kho?.toLowerCase().includes("bắc")
+          )
+          if (k) setMaKho(k.ma_kho)
+        }
+
+      })
 
   }, [])
 
@@ -86,7 +134,6 @@ function Sale() {
         { headers }
       )
 
-      // ---- nếu backend cảnh báo trùng ----
       if (res.data.warning) {
 
         if (window.confirm(res.data.message)) {
@@ -141,39 +188,14 @@ function Sale() {
       <html>
       <head>
         <title>Thông tin viết hóa đơn</title>
-
         <style>
-          body{
-            font-family: Arial;
-            padding:80px;
-            font-size:32px;
-          }
-
-          h1{
-            text-align:center;
-            margin-bottom:60px;
-          }
-
-          .row{
-            margin:30px 0;
-          }
-
-          .label{
-            font-weight:bold;
-            display:inline-block;
-            width:320px;
-          }
-
-          .money{
-            font-size:40px;
-            font-weight:bold;
-            color:red;
-          }
-
+          body{font-family: Arial;padding:80px;font-size:32px;}
+          h1{text-align:center;margin-bottom:60px;}
+          .row{margin:30px 0;}
+          .label{font-weight:bold;display:inline-block;width:320px;}
+          .money{font-size:40px;font-weight:bold;color:red;}
         </style>
-
       </head>
-
       <body>
 
         <h1>THÔNG TIN VIẾT HÓA ĐƠN ĐỎ</h1>
@@ -273,7 +295,6 @@ function Sale() {
                       {p.ten_sp}
                     </option>
                   ))}
-
                 </select>
               </td>
 

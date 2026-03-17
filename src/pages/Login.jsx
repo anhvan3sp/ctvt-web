@@ -9,16 +9,19 @@ function Login() {
   const [loading, setLoading] = useState(false)
 
   const handleLogin = async () => {
+
     setError("")
     setLoading(true)
 
     try {
+
       const formData = new URLSearchParams()
-      formData.append("username", maNV)
+
+      formData.append("username", maNV.trim().toLowerCase())
       formData.append("password", password)
       formData.append("grant_type", "password")
 
-      const response = await axios.post(
+      const res = await axios.post(
         "https://ctvt-core-api.onrender.com/auth/login",
         formData,
         {
@@ -28,19 +31,21 @@ function Login() {
         }
       )
 
-      const token = response.data.access_token
+      const data = res.data
 
-      // Lưu token
-      localStorage.setItem("access_token", token)
-      localStorage.setItem("ma_nv", response.data.ma_nv)
-      localStorage.setItem("vai_tro", response.data.vai_tro)
+      // ---- lưu dữ liệu đăng nhập ----
+      localStorage.setItem("access_token", data.access_token)
+      localStorage.setItem("ma_nv", data.ma_nv)
+      localStorage.setItem("vai_tro", data.vai_tro)
 
-      // Reload toàn bộ app để Router đọc lại token
+      // reload app
       window.location.href = "/"
 
     } catch (err) {
+
       console.error(err)
       setError("Sai tài khoản hoặc mật khẩu")
+
     }
 
     setLoading(false)
@@ -77,6 +82,7 @@ function Login() {
           {error}
         </p>
       )}
+
     </div>
   )
 }
