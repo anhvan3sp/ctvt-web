@@ -16,13 +16,12 @@ export default function Purchase() {
   const [cash, setCash] = useState(0)
   const [transfer, setTransfer] = useState(0)
 
+  const [loading, setLoading] = useState(false)
+
   const [items, setItems] = useState([
     { ma_sp: "", so_luong: 1, don_gia: 0 }
   ])
 
-  // =============================
-  // Load dropdown data
-  // =============================
   useEffect(() => {
     fetchSuppliers()
     fetchWarehouses()
@@ -44,9 +43,6 @@ export default function Purchase() {
     setProducts(res.data)
   }
 
-  // =============================
-  // Item logic
-  // =============================
   const handleItemChange = (index, field, value) => {
     const updated = [...items]
     updated[index][field] = value
@@ -69,10 +65,9 @@ export default function Purchase() {
   const totalPayment = Number(cash) + Number(transfer)
   const diff = totalPayment - total
 
-  // =============================
-  // Submit
-  // =============================
   const handleSubmit = async () => {
+
+    if (loading) return
 
     if (!maNcc) return alert("Chưa chọn nhà cung cấp")
     if (!maKho) return alert("Chưa chọn kho")
@@ -89,15 +84,40 @@ export default function Purchase() {
       ma_kho: maKho,
       tien_mat: Number(cash),
       tien_ck: Number(transfer),
-      items: items
+      items: items,
+      tong_tien: total
     }
 
     try {
-      await axios.post(`${API}/purchase`, data, {
+
+      setLoading(true)
+
+      const res = await axios.post(`${API}/purchase/`, data, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       })
+
+      // ---- kiểm tra cảnh báo duplicate ----
+      if (res.data.warning) {
+        if (window.confirm(res.data.message)) {
+
+          const data2 = {
+            ...data,
+            force_create: true
+          }
+
+          await axios.post(`${API}/purchase/`, data2, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          })
+
+          alert("Đã nhập hóa đơn")
+        }
+
+        return
+      }
 
       alert("Nhập hàng thành công")
 
@@ -108,8 +128,15 @@ export default function Purchase() {
       setItems([{ ma_sp: "", so_luong: 1, don_gia: 0 }])
 
     } catch (err) {
+
       console.error(err)
+
       alert("Lỗi nhập hàng")
+
+    } finally {
+
+      setLoading(false)
+
     }
   }
 
@@ -117,7 +144,6 @@ export default function Purchase() {
     <div style={{ padding: 30, maxWidth: 1100, margin: "auto" }}>
       <h2>Nhập hàng</h2>
 
-      {/* NCC & Kho */}
       <div style={{ marginBottom: 20 }}>
         <select value={maNcc} onChange={e => setMaNcc(e.target.value)}>
           <option value="">Chọn nhà cung cấp</option>
@@ -142,7 +168,6 @@ export default function Purchase() {
         </select>
       </div>
 
-      {/* Bảng sản phẩm */}
       <table border="1" cellPadding="8" width="100%">
         <thead>
           <tr>
@@ -153,6 +178,7 @@ export default function Purchase() {
             <th></th>
           </tr>
         </thead>
+
         <tbody>
           {items.map((item, index) => (
             <tr key={index}>
@@ -208,15 +234,12 @@ export default function Purchase() {
         + Thêm dòng
       </button>
 
-      {/* Thanh toán */}
-      <div
-        style={{
-          marginTop: 30,
-          border: "1px solid #ccc",
-          padding: 15,
-          maxWidth: 500
-        }}
-      >
+      <div style={{
+        marginTop: 30,
+        border: "1px solid #ccc",
+        padding: 15,
+        maxWidth: 500
+      }}>
         <h3>Thanh toán</h3>
 
         <div><strong>Tổng tiền:</strong> {total.toLocaleString()}</div>
@@ -243,30 +266,28 @@ export default function Purchase() {
           <strong>Tổng thanh toán:</strong> {totalPayment.toLocaleString()}
         </div>
 
-        <div
-          style={{
-            marginTop: 5,
-            color: diff === 0 ? "green" : "red"
-          }}
-        >
+        <div style={{
+          marginTop: 5,
+          color: diff === 0 ? "green" : "red"
+        }}>
           <strong>Chênh lệch:</strong> {diff.toLocaleString()}
         </div>
       </div>
 
       <button
         onClick={handleSubmit}
-        disabled={diff !== 0}
+        disabled={diff !== 0 || loading}
         style={{
           marginTop: 20,
           backgroundColor: diff === 0 ? "#28a745" : "#ccc",
           color: "white",
           padding: "8px 15px",
-          border: "none",
-          cursor: diff === 0 ? "pointer" : "not-allowed"
+          border: "none"
         }}
       >
-        Lưu hóa đơn
+        {loading ? "Đang lưu..." : "Lưu hóa đơn"}
       </button>
+
     </div>
   )
 }

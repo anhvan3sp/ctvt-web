@@ -62,27 +62,52 @@ function Sale() {
       return
     }
 
+    const validItems = items.filter(i => i.ma_sp && i.so_luong > 0)
+
+    if (validItems.length === 0) {
+      alert("Chưa chọn sản phẩm")
+      return
+    }
+
+    const data = {
+      ngay,
+      ma_kh: maKH,
+      ma_kho: maKho,
+      tien_mat: tienMat,
+      tien_ck: tienCK,
+      items: validItems
+    }
+
     try {
 
-      const validItems = items.filter(i => i.ma_sp && i.so_luong > 0)
-
-      if (validItems.length === 0) {
-        alert("Chưa chọn sản phẩm")
-        return
-      }
-
-      await axios.post(
+      const res = await axios.post(
         "https://ctvt-core-api.onrender.com/sale/",
-        {
-          ngay,
-          ma_kh: maKH,
-          ma_kho: maKho,
-          tien_mat: tienMat,
-          tien_ck: tienCK,
-          items: validItems
-        },
+        data,
         { headers }
       )
+
+      // ---- nếu backend cảnh báo trùng ----
+      if (res.data.warning) {
+
+        if (window.confirm(res.data.message)) {
+
+          const data2 = {
+            ...data,
+            force_create: true
+          }
+
+          await axios.post(
+            "https://ctvt-core-api.onrender.com/sale/",
+            data2,
+            { headers }
+          )
+
+          alert("Đã tạo hóa đơn")
+          window.location.reload()
+        }
+
+        return
+      }
 
       alert("Bán hàng thành công")
       window.location.reload()
@@ -93,7 +118,6 @@ function Sale() {
     }
   }
 
-  // 🔴 XUẤT THÔNG TIN HÓA ĐƠN ĐỎ (TRANG TO ĐỂ CHỤP MÀN HÌNH)
   const handlePrintInvoice = () => {
 
     if (!maKH) {
@@ -119,7 +143,6 @@ function Sale() {
         <title>Thông tin viết hóa đơn</title>
 
         <style>
-
           body{
             font-family: Arial;
             padding:80px;
@@ -179,7 +202,6 @@ function Sale() {
     `)
 
     win.document.close()
-
   }
 
   return (
