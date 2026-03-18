@@ -1,6 +1,8 @@
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 
 function Layout({ children }) {
+
+  const location = useLocation()
 
   const handleLogout = () => {
     localStorage.removeItem("access_token")
@@ -10,54 +12,71 @@ function Layout({ children }) {
     window.location.href = "/login"
   }
 
+  const menuStyle = (path) => ({
+    color: "white",
+    textDecoration: "none",
+    display: "block",
+    padding: "8px 10px",
+    borderRadius: "4px",
+    background: location.pathname === path ? "#334155" : "transparent"
+  })
+
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
 
       {/* Sidebar */}
-      <div style={{
-        width: "220px",
-        background: "#1e293b",
-        color: "white",
-        padding: "20px"
-      }}>
+      <div
+        style={{
+          width: "230px",
+          background: "#1e293b",
+          color: "white",
+          padding: "20px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between"
+        }}
+      >
 
-        <h2>GAS VĂN THUỶ</h2>
+        <div>
 
-        <div style={{ marginTop: "30px" }}>
+          <h2 style={{ marginBottom: "30px" }}>
+            GAS VĂN THUỶ
+          </h2>
 
-          <p>
-            <Link to="/" style={{ color: "white", textDecoration: "none" }}>
+          <div>
+
+            <Link to="/" style={menuStyle("/")}>
               Bảng điều khiển
             </Link>
-          </p>
 
-          <p>
-            <Link to="/purchase" style={{ color: "white", textDecoration: "none" }}>
+            <Link to="/purchase" style={menuStyle("/purchase")}>
               Nhập hàng
             </Link>
-          </p>
 
-          <p>
-            <Link to="/sale" style={{ color: "white", textDecoration: "none" }}>
+            <Link to="/sale" style={menuStyle("/sale")}>
               Bán hàng
             </Link>
-          </p>
 
-          {/* 🔥 Báo cáo ngày */}
-          <p>
-            <Link to="/report-day" style={{ color: "white", textDecoration: "none" }}>
+            <Link to="/thu-chi" style={menuStyle("/thu-chi")}>
+              Thu chi
+            </Link>
+
+            <Link to="/report-day" style={menuStyle("/report-day")}>
               Báo cáo ngày
             </Link>
-          </p>
+
+          </div>
 
         </div>
 
         <button
           onClick={handleLogout}
           style={{
-            marginTop: "40px",
-            padding: "8px",
-            width: "100%"
+            padding: "10px",
+            width: "100%",
+            border: "none",
+            background: "#e5e7eb",
+            cursor: "pointer"
           }}
         >
           Đăng xuất
@@ -66,7 +85,13 @@ function Layout({ children }) {
       </div>
 
       {/* Nội dung */}
-      <div style={{ flex: 1, padding: "40px" }}>
+      <div
+        style={{
+          flex: 1,
+          padding: "40px",
+          background: "#f3f4f6"
+        }}
+      >
         {children}
       </div>
 

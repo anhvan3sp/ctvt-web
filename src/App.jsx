@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard"
 import Purchase from "./pages/Purchase"
 import Sale from "./pages/Sale"
 import ReportDay from "./pages/ReportDay"
+import ThuChi from "./pages/ThuChi"
 
 function App() {
 
@@ -42,6 +43,14 @@ function App() {
         path="/sale"
         element={
           token ? <Sale /> : <Navigate to="/login" />
+        }
+      />
+
+      {/* Thu Chi */}
+      <Route
+        path="/thu-chi"
+        element={
+          token ? <ThuChi /> : <Navigate to="/login" />
         }
       />
 
