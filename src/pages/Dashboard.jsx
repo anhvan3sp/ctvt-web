@@ -90,7 +90,7 @@ function Dashboard() {
 
         <h3>Hôm nay</h3>
 
-        <p>Bán: ... bình</p>
+        <p>Bán: {data.ban_hom_nay || 0} bình</p>
 
         <p>Thu: {data.thu_hom_nay.toLocaleString()} đ</p>
 
