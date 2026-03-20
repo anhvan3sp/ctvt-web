@@ -6,6 +6,7 @@ import Purchase from "./pages/Purchase"
 import Sale from "./pages/Sale"
 import ReportDay from "./pages/ReportDay"
 import ThuChi from "./pages/ThuChi"
+import KhoiTaoDauKy from "./pages/KhoiTaoDauKy" // ✅ thêm
 
 function App() {
 
@@ -14,55 +15,35 @@ function App() {
   return (
     <Routes>
 
-      {/* Login */}
-      <Route
-        path="/login"
-        element={
-          token ? <Navigate to="/" /> : <Login />
-        }
+      <Route path="/login"
+        element={token ? <Navigate to="/" /> : <Login />}
       />
 
-      {/* Dashboard */}
-      <Route
-        path="/"
-        element={
-          token ? <Dashboard /> : <Navigate to="/login" />
-        }
+      <Route path="/"
+        element={token ? <Dashboard /> : <Navigate to="/login" />}
       />
 
-      {/* Nhập hàng */}
-      <Route
-        path="/purchase"
-        element={
-          token ? <Purchase /> : <Navigate to="/login" />
-        }
+      <Route path="/purchase"
+        element={token ? <Purchase /> : <Navigate to="/login" />}
       />
 
-      {/* Bán hàng */}
-      <Route
-        path="/sale"
-        element={
-          token ? <Sale /> : <Navigate to="/login" />
-        }
+      <Route path="/sale"
+        element={token ? <Sale /> : <Navigate to="/login" />}
       />
 
-      {/* Thu Chi */}
-      <Route
-        path="/thu-chi"
-        element={
-          token ? <ThuChi /> : <Navigate to="/login" />
-        }
+      <Route path="/thu-chi"
+        element={token ? <ThuChi /> : <Navigate to="/login" />}
       />
 
-      {/* Báo cáo ngày */}
-      <Route
-        path="/report-day"
-        element={
-          token ? <ReportDay /> : <Navigate to="/login" />
-        }
+      <Route path="/report-day"
+        element={token ? <ReportDay /> : <Navigate to="/login" />}
       />
 
-      {/* fallback */}
+      {/* ✅ thêm */}
+      <Route path="/khoi-tao-dau-ky"
+        element={token ? <KhoiTaoDauKy /> : <Navigate to="/login" />}
+      />
+
       <Route path="*" element={<Navigate to="/" />} />
 
     </Routes>
