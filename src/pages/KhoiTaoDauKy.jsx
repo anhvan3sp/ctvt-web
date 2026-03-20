@@ -1,97 +1,89 @@
 import { useState } from "react"
 import axios from "axios"
-import * as XLSX from "xlsx"
 
 export default function KhoiTaoDauKy() {
 
-  const [data, setData] = useState(null)
-  const [preview, setPreview] = useState(false)
+  const [file, setFile] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  // =========================
-  // IMPORT EXCEL
-  // =========================
-  const handleFile = (e) => {
-    const file = e.target.files[0]
+  // DOWNLOAD TEMPLATE (FIX CHUẨN)
+  const downloadTemplate = async () => {
+    const res = await axios.get("/system/export-dau-ky-template", {
+      responseType: "blob"
+    })
 
-    const reader = new FileReader()
+    const url = window.URL.createObjectURL(new Blob([res.data]))
 
-    reader.onload = (evt) => {
-      const wb = XLSX.read(evt.target.result, { type: "binary" })
-
-      const ton_kho = XLSX.utils.sheet_to_json(wb.Sheets["ton_kho"])
-      const quy_nv = XLSX.utils.sheet_to_json(wb.Sheets["quy_nhan_vien"])
-      const quy_ct = XLSX.utils.sheet_to_json(wb.Sheets["quy_cong_ty"])
-
-      const payload = {
-        ngay: new Date().toISOString().slice(0, 10),
-        ton_kho: ton_kho,
-        quy_nhan_vien: quy_nv,
-        quy_cong_ty: quy_ct[0]?.tien_mat || 0,
-        cong_no_khach: [],
-        cong_no_ncc: []
-      }
-
-      setData(payload)
-      setPreview(true)
-    }
-
-    reader.readAsBinaryString(file)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "template_dau_ky.xlsx"
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
   }
 
-  // =========================
-  // CONFIRM
-  // =========================
+  // UPLOAD FILE
+  const handleFile = (e) => {
+    setFile(e.target.files[0])
+  }
+
+  // IMPORT
   const handleSubmit = async () => {
 
-    if (!window.confirm("⚠️ Xác nhận khởi tạo? (KHÔNG hoàn tác)"))
+    if (!file) {
+      alert("Chọn file trước")
       return
+    }
+
+    if (!window.confirm("Xác nhận import?")) return
 
     setLoading(true)
 
+    const formData = new FormData()
+    formData.append("file", file)
+
     try {
-      await axios.post("/system/khoi-tao-dau-ky", data)
-      alert("✅ Thành công")
-      setPreview(false)
+      const res = await axios.post("/system/import-dau-ky?mode=reset", formData)
+      
+      if (res.data.status === "error") {
+        alert(res.data.errors.join("\n"))
+      } else {
+        alert("Import thành công")
+      }
+
     } catch (err) {
-      alert("❌ Lỗi")
+      alert("Lỗi import")
     }
 
     setLoading(false)
   }
 
   return (
-    <div>
+    <div style={{ padding: 20 }}>
 
-      <h2>Khởi tạo đầu kỳ (Excel)</h2>
+      <h2>Khởi tạo đầu kỳ</h2>
 
-      {/* IMPORT */}
+      <button onClick={downloadTemplate}>
+        📥 Tải file mẫu
+      </button>
+
+      <br /><br />
+
       <input type="file" onChange={handleFile} />
 
-      {/* PREVIEW */}
-      {preview && (
-        <div style={{ marginTop: 20 }}>
+      <br /><br />
 
-          <h3>Preview</h3>
-
-          <p><b>Tồn kho:</b> {data.ton_kho.length} dòng</p>
-          <p><b>Quỹ NV:</b> {data.quy_nhan_vien.length} dòng</p>
-          <p><b>Quỹ CT:</b> {data.quy_cong_ty}</p>
-
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            style={{
-              background: "red",
-              color: "white",
-              padding: "10px"
-            }}
-          >
-            {loading ? "Đang xử lý..." : "XÁC NHẬN KHỞI TẠO"}
-          </button>
-
-        </div>
-      )}
+      <button
+        onClick={handleSubmit}
+        disabled={loading}
+        style={{
+          background: "red",
+          color: "white",
+          padding: 10
+        }}
+      >
+        {loading ? "Đang xử lý..." : "Import"}
+      </button>
 
     </div>
   )
