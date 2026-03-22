@@ -4,12 +4,11 @@ import Layout from "../components/Layout"
 
 function ThuChi() {
 
-  const inputTienRef = useRef(null)
+  const inputRefs = useRef([])
 
-  const [loai, setLoai] = useState("chi")
-  const [soTien, setSoTien] = useState("")
-  const [hinhThuc, setHinhThuc] = useState("tien_mat")
-  const [loaiGiaoDich, setLoaiGiaoDich] = useState("do_dau")
+  const [rows, setRows] = useState([
+    { loai: "chi", loai_giao_dich: "do_dau", so_tien: "", hinh_thuc: "tien_mat" }
+  ])
 
   const thuOptions = [
     { value: "khach_tra_no", label: "Khách trả nợ" },
@@ -28,39 +27,65 @@ function ThuChi() {
   ]
 
   useEffect(() => {
-    inputTienRef.current?.focus()
+    inputRefs.current[0]?.focus()
   }, [])
 
-  useEffect(() => {
-    if (loaiGiaoDich === "nop_tien") {
-      setHinhThuc("tien_mat")
-    }
-  }, [loaiGiaoDich])
+  const update = (i, field, value) => {
+    const newRows = [...rows]
 
-  const handleLoai = (type) => {
-    setLoai(type)
-    setLoaiGiaoDich(type === "thu" ? "khach_tra_no" : "do_dau")
+    newRows[i][field] = value
+
+    // auto logic
+    if (field === "loai") {
+      newRows[i].loai_giao_dich =
+        value === "thu" ? "khach_tra_no" : "do_dau"
+    }
+
+    if (field === "loai_giao_dich" && value === "nop_tien") {
+      newRows[i].hinh_thuc = "tien_mat"
+    }
+
+    setRows(newRows)
+  }
+
+  const addRow = () => {
+    setRows([
+      ...rows,
+      { loai: "chi", loai_giao_dich: "do_dau", so_tien: "", hinh_thuc: "tien_mat" }
+    ])
+
+    setTimeout(() => {
+      inputRefs.current[rows.length]?.focus()
+    }, 0)
+  }
+
+  const removeRow = (i) => {
+    setRows(rows.filter((_, idx) => idx !== i))
   }
 
   const handleSubmit = async () => {
 
-    if (!soTien) {
-      alert("Chưa nhập số tiền")
-      return
-    }
-
     try {
 
-      const res = await api.post("/thu-chi-nv/create", {
-        loai,
-        loai_giao_dich: loaiGiaoDich,
-        so_tien: Number(soTien),
-        hinh_thuc: hinhThuc
-      })
+      for (let r of rows) {
 
-      alert(res.data.message)
-      setSoTien("")
-      inputTienRef.current?.focus()
+        if (!r.so_tien) continue
+
+        await api.post("/thu-chi-nv/create", {
+          loai: r.loai,
+          loai_giao_dich: r.loai_giao_dich,
+          so_tien: Number(r.so_tien),
+          hinh_thuc: r.hinh_thuc
+        })
+      }
+
+      alert("OK")
+
+      setRows([
+        { loai: "chi", loai_giao_dich: "do_dau", so_tien: "", hinh_thuc: "tien_mat" }
+      ])
+
+      inputRefs.current[0]?.focus()
 
     } catch (err) {
 
@@ -73,79 +98,77 @@ function ThuChi() {
     }
   }
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") handleSubmit()
+  const handleKeyDown = (e, i) => {
+    if (e.key === "Enter") {
+      if (i === rows.length - 1) {
+        addRow()
+      } else {
+        inputRefs.current[i + 1]?.focus()
+      }
+    }
   }
-
-  const options = loai === "thu" ? thuOptions : chiOptions
 
   return (
     <Layout>
 
       <h2>Thu Chi</h2>
 
-      <div style={{ marginBottom: "20px" }}>
+      {rows.map((r, i) => {
 
-        <button onClick={() => handleLoai("thu")}
-          style={{ background: loai === "thu" ? "#ddd" : "" }}>
-          Thu
-        </button>
+        const options = r.loai === "thu" ? thuOptions : chiOptions
 
-        <button onClick={() => handleLoai("chi")}
-          style={{ marginLeft: "10px", background: loai === "chi" ? "#ddd" : "" }}>
-          Chi
-        </button>
+        return (
+          <div key={i} style={{ marginBottom: "10px" }}>
 
-      </div>
+            <select
+              value={r.loai}
+              onChange={(e) => update(i, "loai", e.target.value)}
+            >
+              <option value="thu">Thu</option>
+              <option value="chi">Chi</option>
+            </select>
 
-      <div style={{ marginBottom: "15px" }}>
+            <select
+              value={r.loai_giao_dich}
+              onChange={(e) => update(i, "loai_giao_dich", e.target.value)}
+            >
+              {options.map(o => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
 
-        <label>Loại giao dịch </label>
+            <input
+              ref={el => inputRefs.current[i] = el}
+              value={r.so_tien}
+              onChange={(e) => update(i, "so_tien", e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, i)}
+              type="number"
+              style={{ width: "120px" }}
+            />
 
-        <select value={loaiGiaoDich}
-          onChange={(e) => setLoaiGiaoDich(e.target.value)}>
+            <select
+              value={r.hinh_thuc}
+              onChange={(e) => update(i, "hinh_thuc", e.target.value)}
+              disabled={r.loai_giao_dich === "nop_tien"}
+            >
+              <option value="tien_mat">Tiền mặt</option>
+              <option value="chuyen_khoan">Chuyển khoản</option>
+            </select>
 
-          {options.map(o => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
+            <button onClick={() => removeRow(i)}>X</button>
 
-        </select>
+          </div>
+        )
+      })}
 
-      </div>
+      <button onClick={addRow}>+ Thêm dòng</button>
 
-      <div style={{ marginBottom: "15px" }}>
-
-        <label>Số tiền </label>
-
-        <input
-          ref={inputTienRef}
-          value={soTien}
-          onChange={(e) => setSoTien(e.target.value)}
-          onKeyDown={handleKeyDown}
-          type="number"
-        />
-
-      </div>
-
-      <div style={{ marginBottom: "20px" }}>
-
-        <label>Hình thức </label>
-
-        <select
-          value={hinhThuc}
-          onChange={(e) => setHinhThuc(e.target.value)}
-          disabled={loaiGiaoDich === "nop_tien"}
-        >
-          <option value="tien_mat">Tiền mặt</option>
-          <option value="chuyen_khoan">Chuyển khoản</option>
-        </select>
-
-      </div>
+      <br /><br />
 
       <button onClick={handleSubmit}>
-        Lưu
+        Lưu tất cả
       </button>
 
     </Layout>
