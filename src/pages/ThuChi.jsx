@@ -6,15 +6,20 @@ function ThuChi() {
 
   const inputRefs = useRef([])
 
-  const [rows, setRows] = useState([
-    { loai: "chi", loai_giao_dich: "do_dau", so_tien: "", hinh_thuc: "tien_mat" }
-  ])
+  // 🔥 tạo row
+  const createRow = () => ({
+    loai: "chi",
+    loai_giao_dich: "do_dau",
+    so_tien: "",
+    hinh_thuc: "tien_mat",
+    idempotency_key: crypto.randomUUID()
+  })
 
-  // ====== ENUM CHUẨN (MATCH BACKEND + DB) ======
+  const [rows, setRows] = useState([createRow()])
+  const [loading, setLoading] = useState(false)
+
   const thuOptions = [
-    { value: "khach_tra_no", label: "Khách trả nợ" },
     { value: "thu_khac", label: "Thu khác" },
-    { value: "khach_dat_tien", label: "Khách Đặt Tiền" },
     { value: "nop_them", label: "Nộp thêm" }
   ]
 
@@ -22,6 +27,8 @@ function ThuChi() {
     { value: "do_dau", label: "Đổ dầu" },
     { value: "tien_do", label: "Tiền đò" },
     { value: "nop_tien", label: "Nộp tiền" },
+    { value: "sua_xe", label: "Sửa xe" },
+    { value: "dang_kiem", label: "Đăng kiểm" },
     { value: "chi_khac", label: "Chi khác" }
   ]
 
@@ -31,16 +38,13 @@ function ThuChi() {
 
   const update = (i, field, value) => {
     const newRows = [...rows]
-
     newRows[i][field] = value
 
-    // auto logic
     if (field === "loai") {
       newRows[i].loai_giao_dich =
-        value === "thu" ? "khach_tra_no" : "do_dau"
+        value === "thu" ? "thu_khac" : "do_dau"
     }
 
-    // nộp tiền luôn là tiền mặt
     if (field === "loai_giao_dich" && value === "nop_tien") {
       newRows[i].hinh_thuc = "tien_mat"
     }
@@ -49,10 +53,7 @@ function ThuChi() {
   }
 
   const addRow = () => {
-    setRows([
-      ...rows,
-      { loai: "chi", loai_giao_dich: "do_dau", so_tien: "", hinh_thuc: "tien_mat" }
-    ])
+    setRows([...rows, createRow()])
 
     setTimeout(() => {
       inputRefs.current[rows.length]?.focus()
@@ -63,7 +64,23 @@ function ThuChi() {
     setRows(rows.filter((_, idx) => idx !== i))
   }
 
+  // 🔥 SUBMIT 1 ROW
+  const submitRow = async (r, force = false) => {
+    return await api.post("/thu-chi-nv/create", {
+      loai: r.loai,
+      loai_giao_dich: r.loai_giao_dich,
+      so_tien: Number(r.so_tien),
+      hinh_thuc: r.hinh_thuc,
+      idempotency_key: r.idempotency_key,
+      force
+    })
+  }
+
+  // 🔥 SUBMIT ALL
   const handleSubmit = async () => {
+
+    if (loading) return
+    setLoading(true)
 
     try {
 
@@ -71,30 +88,46 @@ function ThuChi() {
 
         if (!r.so_tien) continue
 
-        await api.post("/thu-chi-nv/create", {
-          loai: r.loai,
-          loai_giao_dich: r.loai_giao_dich,
-          so_tien: Number(r.so_tien),
-          hinh_thuc: r.hinh_thuc
-        })
+        try {
+
+          await submitRow(r)
+
+        } catch (err) {
+
+          // 🔥 DUPLICATE → confirm
+          if (err.response?.status === 409) {
+
+            const msg = err.response?.data?.detail
+
+            const ok = window.confirm(msg + "\n\nOK = Vẫn nhập\nCancel = Bỏ")
+
+            if (ok) {
+              await submitRow(r, true) // 🔥 force
+            } else {
+              continue
+            }
+
+          } else {
+            throw err
+          }
+        }
       }
 
       alert("OK")
 
-      setRows([
-        { loai: "chi", loai_giao_dich: "do_dau", so_tien: "", hinh_thuc: "tien_mat" }
-      ])
-
+      setRows([createRow()])
       inputRefs.current[0]?.focus()
 
     } catch (err) {
 
       const msg =
         err.response?.data?.detail ||
-        err.response?.data?.message ||
         "Lỗi hệ thống"
 
       alert(msg)
+
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -167,8 +200,8 @@ function ThuChi() {
 
       <br /><br />
 
-      <button onClick={handleSubmit}>
-        Lưu tất cả
+      <button onClick={handleSubmit} disabled={loading}>
+        {loading ? "Đang lưu..." : "Lưu tất cả"}
       </button>
 
     </Layout>

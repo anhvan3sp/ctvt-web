@@ -6,7 +6,6 @@ function Sale() {
   const token = localStorage.getItem("access_token")
   const headers = { Authorization: `Bearer ${token}` }
 
-  // ---- decode JWT để lấy mã nhân viên (sub) ----
   let maNV = ""
   if (token) {
     try {
@@ -41,7 +40,6 @@ function Sale() {
 
     axios.get("https://ctvt-core-api.onrender.com/products/", { headers })
       .then(res => {
-
         const ps = res.data
         setProducts(ps)
 
@@ -54,12 +52,10 @@ function Sale() {
             { ma_sp: gas12.ma_sp, so_luong: 1, don_gia: 0 }
           ])
         }
-
       })
 
     axios.get("https://ctvt-core-api.onrender.com/warehouses/", { headers })
       .then(res => {
-
         const ws = res.data
         setWarehouses(ws)
 
@@ -76,7 +72,6 @@ function Sale() {
           )
           if (k) setMaKho(k.ma_kho)
         }
-
       })
 
   }, [])
@@ -100,7 +95,7 @@ function Sale() {
     0
   )
 
-  // 🔥 FIX DUY NHẤT Ở ĐÂY
+  // ===== FIX CHÍNH Ở ĐÂY =====
   const handleSubmit = async (force = false) => {
 
     if (!maKH || !maKho) {
@@ -122,7 +117,7 @@ function Sale() {
       tien_mat: tienMat,
       tien_ck: tienCK,
       items: validItems,
-      force   // 🔥 thêm
+      force
     }
 
     try {
@@ -138,13 +133,13 @@ function Sale() {
 
     } catch (err) {
 
-      // 🔥 BẮT TRÙNG
-      if (err.response?.status === 409) {
+      // ✅ CHẶN LOOP + FORCE ĐÚNG
+      if (err.response?.status === 409 && !force) {
 
         const ok = window.confirm("Hoá đơn trùng. Vẫn tạo?")
 
         if (ok) {
-          handleSubmit(true)
+          await handleSubmit(true)   // 🔥 FIX QUAN TRỌNG
         }
 
       } else {
