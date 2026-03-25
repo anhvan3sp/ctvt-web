@@ -65,6 +65,7 @@ export default function Purchase() {
   const totalPayment = Number(cash) + Number(transfer)
   const diff = totalPayment - total
 
+  // 🔥 FINAL FIX
   const handleSubmit = async () => {
 
     if (loading) return
@@ -78,7 +79,9 @@ export default function Purchase() {
     if (diff !== 0)
       return alert("Thanh toán chưa khớp tổng tiền")
 
-    const data = {
+    const token = localStorage.getItem("access_token")
+
+    const baseData = {
       ngay: new Date().toISOString().split("T")[0],
       ma_ncc: maNcc,
       ma_kho: maKho,
@@ -92,46 +95,50 @@ export default function Purchase() {
 
       setLoading(true)
 
-      const res = await axios.post(`${API}/purchase/`, data, {
+      await axios.post(`${API}/purchase/`, baseData, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       })
 
-      // ---- kiểm tra cảnh báo duplicate ----
-      if (res.data.warning) {
-        if (window.confirm(res.data.message)) {
+      alert("Nhập hàng thành công")
+      window.location.reload()
 
-          const data2 = {
-            ...data,
-            force_create: true
-          }
+    } catch (err) {
 
-          await axios.post(`${API}/purchase/`, data2, {
+      // 🔥 401
+      if (err.response?.status === 401) {
+        alert("Hết phiên đăng nhập")
+        window.location.href = "/login"
+        return
+      }
+
+      // 🔥 409 - TRÙNG
+      if (err.response?.status === 409) {
+
+        const ok = window.confirm("Hoá đơn trùng. Vẫn tạo?")
+
+        if (ok) {
+
+          await axios.post(`${API}/purchase/`, {
+            ...baseData,
+            force: true
+          }, {
             headers: {
               Authorization: `Bearer ${token}`
             }
           })
 
-          alert("Đã nhập hóa đơn")
+          alert("Đã tạo hoá đơn trùng")
+          window.location.reload()
         }
 
-        return
+      } else {
+
+        console.error(err.response?.data)
+        alert("Lỗi nhập hàng")
+
       }
-
-      alert("Nhập hàng thành công")
-
-      setMaNcc("")
-      setMaKho("")
-      setCash(0)
-      setTransfer(0)
-      setItems([{ ma_sp: "", so_luong: 1, don_gia: 0 }])
-
-    } catch (err) {
-
-      console.error(err)
-
-      alert("Lỗi nhập hàng")
 
     } finally {
 

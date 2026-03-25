@@ -10,18 +10,17 @@ function ThuChi() {
     { loai: "chi", loai_giao_dich: "do_dau", so_tien: "", hinh_thuc: "tien_mat" }
   ])
 
+  // ====== ENUM CHUẨN (MATCH BACKEND + DB) ======
   const thuOptions = [
     { value: "khach_tra_no", label: "Khách trả nợ" },
-    { value: "khach_dat_hang", label: "Khách đặt hàng" },
-    { value: "cho_hang_thue", label: "Chở hàng thuê" },
-    { value: "thu_khac", label: "Thu khác" }
+    { value: "thu_khac", label: "Thu khác" },
+    { value: "khach_dat_tien", label: "Khách Đặt Tiền" },
+    { value: "nop_them", label: "Nộp thêm" }
   ]
 
   const chiOptions = [
     { value: "do_dau", label: "Đổ dầu" },
-    { value: "sua_xe", label: "Sửa xe" },
-    { value: "dang_kiem", label: "Đăng kiểm" },
-    { value: "tien_doi", label: "Tiền đò" },
+    { value: "tien_do", label: "Tiền đò" },
     { value: "nop_tien", label: "Nộp tiền" },
     { value: "chi_khac", label: "Chi khác" }
   ]
@@ -41,6 +40,7 @@ function ThuChi() {
         value === "thu" ? "khach_tra_no" : "do_dau"
     }
 
+    // nộp tiền luôn là tiền mặt
     if (field === "loai_giao_dich" && value === "nop_tien") {
       newRows[i].hinh_thuc = "tien_mat"
     }
