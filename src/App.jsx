@@ -6,7 +6,10 @@ import Purchase from "./pages/Purchase"
 import Sale from "./pages/Sale"
 import ReportDay from "./pages/ReportDay"
 import ThuChi from "./pages/ThuChi"
-import KhoiTaoDauKy from "./pages/KhoiTaoDauKy" // ✅ thêm
+import KhoiTaoDauKy from "./pages/KhoiTaoDauKy"
+import Activity from "./pages/Activity"
+// ✅ QUAN TRỌNG: phải đúng tên file
+import AIPage from "./pages/AIPage"
 
 function App() {
 
@@ -15,33 +18,48 @@ function App() {
   return (
     <Routes>
 
-      <Route path="/login"
+      <Route
+        path="/login"
         element={token ? <Navigate to="/" /> : <Login />}
       />
 
-      <Route path="/"
+      <Route
+        path="/"
         element={token ? <Dashboard /> : <Navigate to="/login" />}
       />
 
-      <Route path="/purchase"
+      <Route
+        path="/purchase"
         element={token ? <Purchase /> : <Navigate to="/login" />}
       />
 
-      <Route path="/sale"
+      <Route
+        path="/sale"
         element={token ? <Sale /> : <Navigate to="/login" />}
       />
 
-      <Route path="/thu-chi"
+      <Route
+        path="/thu-chi"
         element={token ? <ThuChi /> : <Navigate to="/login" />}
       />
 
-      <Route path="/report-day"
+      <Route
+        path="/report-day"
         element={token ? <ReportDay /> : <Navigate to="/login" />}
       />
 
-      {/* ✅ thêm */}
-      <Route path="/khoi-tao-dau-ky"
+      <Route
+        path="/khoi-tao-dau-ky"
         element={token ? <KhoiTaoDauKy /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/activity"
+        element={token ? <Activity /> : <Navigate to="/login" />}
+      />
+      {/* ✅ THÊM AI */}
+      <Route
+        path="/ai"
+        element={token ? <AIPage /> : <Navigate to="/login" />}
       />
 
       <Route path="*" element={<Navigate to="/" />} />

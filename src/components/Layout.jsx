@@ -51,6 +51,12 @@ function Layout({ children }) {
             <Link to="/khoi-tao-dau-ky" style={menuStyle("/khoi-tao-dau-ky")}>
               Khởi tạo đầu kỳ
             </Link>
+            <Link to="/activity" style={menuStyle("/activity")}>
+              Huỷ hoá đơn
+            </Link>
+            <Link to="/ai" style={menuStyle("/ai")}>
+             🤖 Trợ lý AI
+            </Link>
 
           </div>
         </div>

@@ -36,11 +36,9 @@ function Sale() {
 
   useEffect(() => {
 
-    // ---- load khách hàng ----
     axios.get("https://ctvt-core-api.onrender.com/customer/", { headers })
       .then(res => setCustomers(res.data))
 
-    // ---- load sản phẩm + mặc định Gas 12 ----
     axios.get("https://ctvt-core-api.onrender.com/products/", { headers })
       .then(res => {
 
@@ -59,7 +57,6 @@ function Sale() {
 
       })
 
-    // ---- load kho + tự chọn theo nhân viên ----
     axios.get("https://ctvt-core-api.onrender.com/warehouses/", { headers })
       .then(res => {
 
@@ -103,7 +100,8 @@ function Sale() {
     0
   )
 
-  const handleSubmit = async () => {
+  // 🔥 FIX DUY NHẤT Ở ĐÂY
+  const handleSubmit = async (force = false) => {
 
     if (!maKH || !maKho) {
       alert("Chọn khách và kho")
@@ -123,45 +121,37 @@ function Sale() {
       ma_kho: maKho,
       tien_mat: tienMat,
       tien_ck: tienCK,
-      items: validItems
+      items: validItems,
+      force   // 🔥 thêm
     }
 
     try {
 
-      const res = await axios.post(
+      await axios.post(
         "https://ctvt-core-api.onrender.com/sale/",
         data,
         { headers }
       )
 
-      if (res.data.warning) {
-
-        if (window.confirm(res.data.message)) {
-
-          const data2 = {
-            ...data,
-            force_create: true
-          }
-
-          await axios.post(
-            "https://ctvt-core-api.onrender.com/sale/",
-            data2,
-            { headers }
-          )
-
-          alert("Đã tạo hóa đơn")
-          window.location.reload()
-        }
-
-        return
-      }
-
       alert("Bán hàng thành công")
       window.location.reload()
 
     } catch (err) {
-      console.error(err.response?.data)
-      alert("Lỗi khi lưu")
+
+      // 🔥 BẮT TRÙNG
+      if (err.response?.status === 409) {
+
+        const ok = window.confirm("Hoá đơn trùng. Vẫn tạo?")
+
+        if (ok) {
+          handleSubmit(true)
+        }
+
+      } else {
+        console.error(err.response?.data)
+        alert("Lỗi khi lưu")
+      }
+
     }
   }
 
@@ -349,7 +339,7 @@ function Sale() {
       </div>
 
       <div style={{ marginTop: "15px" }}>
-        <button onClick={handleSubmit}>
+        <button onClick={() => handleSubmit()}>
           Lưu hóa đơn
         </button>
 
