@@ -30,12 +30,15 @@ function Dashboard() {
     )
   }
 
+  const format = (v) => (v || 0).toLocaleString("vi-VN")
+
   return (
     <Layout>
 
       <h1>Bảng Điều Khiển</h1>
 
-      <p>Chào mừng đến hệ thống GAS VĂN THUỶ</p>
+      {/* 🔥 TÊN NGƯỜI */}
+      <p>Chào <b>{data.ten_nv}</b></p>
 
       <br />
 
@@ -43,14 +46,14 @@ function Dashboard() {
         <>
           <h3>Quỹ công ty</h3>
 
-          <p>Tiền mặt: {(data.tien_mat || 0).toLocaleString()} đ</p>
-          <p>Tiền ngân hàng: {(data.tien_ngan_hang || 0).toLocaleString()} đ</p>
-          <p><b>Tổng quỹ: {(data.tong_quy || 0).toLocaleString()} đ</b></p>
+          <p>Tiền mặt: {format(data.tien_mat)} đ</p>
+          <p>Tiền ngân hàng: {format(data.tien_ngan_hang)} đ</p>
+          <p><b>Tổng quỹ: {format(data.tong_quy)} đ</b></p>
         </>
       )}
 
       {data.loai === "nhan_vien" && (
-        <h3>Quỹ của bạn: {(data.so_du || 0).toLocaleString()} đ</h3>
+        <h3>Quỹ của bạn: {format(data.so_du)} đ</h3>
       )}
 
       <br />
@@ -63,9 +66,26 @@ function Dashboard() {
 
         <h3>Hôm nay</h3>
 
-        <p>Bán: {data.ban_hom_nay || 0} bình</p>
-        <p>Thu: {(data.thu_hom_nay || 0).toLocaleString()} đ</p>
-        <p>Chi: {(data.chi_hom_nay || 0).toLocaleString()} đ</p>
+        {/* 🔥 PHÂN LOẠI BÁN */}
+        <div>
+          <b>Bán hàng:</b>
+          {data.ban_theo_loai?.length > 0 ? (
+            data.ban_theo_loai.map((b,i)=>(
+              <div key={i}>
+                {b.ten}: {b.so_luong} bình
+              </div>
+            ))
+          ) : (
+            <div>Không có dữ liệu</div>
+          )}
+        </div>
+
+        <hr/>
+
+        <p><b>Tổng: {data.ban_hom_nay} bình</b></p>
+
+        <p>Thu: {format(data.thu_hom_nay)} đ</p>
+        <p>Chi: {format(data.chi_hom_nay)} đ</p>
 
       </div>
 

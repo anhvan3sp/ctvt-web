@@ -14,10 +14,13 @@ new Date().toISOString().split("T")[0]
 )
 
 const [data,setData]=useState(null)
+const [loading,setLoading]=useState(false)
 
 const xemBaoCao=async()=>{
 
 try{
+
+setLoading(true)
 
 const res = await axios.get(
 "https://ctvt-core-api.onrender.com/report/day",
@@ -35,17 +38,23 @@ setData(res.data)
 
 console.error("Lỗi báo cáo:",err)
 
+}finally{
+setLoading(false)
 }
 
 }
 
-const format=(v)=> v ? Number(v).toLocaleString() : 0
+// format tiền
+const format=(v)=> v ? Number(v).toLocaleString("vi-VN") : "0"
 
 return(
 
 <div>
 
 <h2>Báo cáo ngày</h2>
+
+<p>Ngày: {ngay}</p>
+<p>Nhân viên: {data?.nhan_vien || "..."}</p>
 
 <input
 type="date"
@@ -54,8 +63,12 @@ onChange={(e)=>setNgay(e.target.value)}
 />
 
 <button onClick={xemBaoCao}>
-Xem báo cáo
+{loading ? "Đang tải..." : "Xem báo cáo"}
 </button>
+
+{!data && !loading && (
+<p>Chưa có dữ liệu</p>
+)}
 
 {data && (
 
@@ -71,7 +84,7 @@ Xem báo cáo
 <tr>
 <th>Số HD</th>
 <th>Khách</th>
-<th>Số bình</th>
+<th>Chi tiết</th>
 <th>Tổng tiền</th>
 <th>TM</th>
 <th>CK</th>
@@ -80,18 +93,40 @@ Xem báo cáo
 
 <tbody>
 
-{data?.hoa_don_ban_trong_ngay?.map((s,i)=>(
+{data?.hoa_don_ban_trong_ngay?.length > 0 ? (
+
+data.hoa_don_ban_trong_ngay.map((s,i)=>(
 
 <tr key={i}>
 <td>{s.so_hd}</td>
 <td>{s.ten_kh}</td>
-<td>{s.so_binh}</td>
+
+<td>
+{s.chi_tiet && s.chi_tiet.length > 0 ? (
+s.chi_tiet.map((ct,idx)=>(
+<div key={idx}>
+{ct.ten_hang} - {ct.so_luong} x {format(ct.don_gia)} = <b>{format(ct.thanh_tien)}</b>
+</div>
+))
+) : (
+<span>Không có chi tiết</span>
+)}
+</td>
+
 <td>{format(s.tong_tien)}</td>
 <td>{format(s.tien_mat)}</td>
 <td>{format(s.tien_ck)}</td>
 </tr>
 
-))}
+))
+
+) : (
+
+<tr>
+<td colSpan="6">Không có dữ liệu</td>
+</tr>
+
+)}
 
 </tbody>
 
@@ -113,14 +148,24 @@ Xem báo cáo
 
 <tbody>
 
-{data?.hoa_don_nhap_trong_ngay?.map((p,i)=>(
+{data?.hoa_don_nhap_trong_ngay?.length > 0 ? (
+
+data.hoa_don_nhap_trong_ngay.map((p,i)=>(
 
 <tr key={i}>
 <td>{p.so_hd}</td>
 <td>{format(p.tong_tien)}</td>
 </tr>
 
-))}
+))
+
+) : (
+
+<tr>
+<td colSpan="2">Không có dữ liệu</td>
+</tr>
+
+)}
 
 </tbody>
 
@@ -135,23 +180,37 @@ Xem báo cáo
 
 <thead>
 <tr>
+<th>Loại</th>
 <th>Đối tượng</th>
 <th>Số tiền</th>
 <th>Hình thức</th>
+<th>Nội dung</th>
 </tr>
 </thead>
 
 <tbody>
 
-{data?.thu_chi_trong_ngay?.map((t,i)=>(
+{data?.thu_chi_trong_ngay?.length > 0 ? (
+
+data.thu_chi_trong_ngay.map((t,i)=>(
 
 <tr key={i}>
+<td>{t.loai === "thu" ? "Thu" : "Chi"}</td>
 <td>{t.doi_tuong}</td>
 <td>{format(t.so_tien)}</td>
 <td>{t.hinh_thuc}</td>
+<td>{t.noi_dung || ""}</td>
 </tr>
 
-))}
+))
+
+) : (
+
+<tr>
+<td colSpan="5">Không có dữ liệu</td>
+</tr>
+
+)}
 
 </tbody>
 
@@ -172,12 +231,12 @@ Xem báo cáo
 
 <p>Chuyển khoản: {format(data?.tong_ket?.tong_chuyen_khoan)}</p>
 
-<p>Thu khác: {format(data?.tong_ket?.tong_thu_khac)}</p>
+<p>Tổng thu: {format(data?.tong_ket?.tong_thu)}</p>
 
-<p>Chi: {format(data?.tong_ket?.tong_chi)}</p>
+<p>Tổng chi: {format(data?.tong_ket?.tong_chi)}</p>
 
 <h2>
-Tồn quỹ cuối ngày: {format(data?.tong_ket?.ton_quy_cuoi_ngay)}
+Tồn quỹ cuối ngày: {format(data?.tong_ket?.ton_quy)}
 </h2>
 
 </div>
