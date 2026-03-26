@@ -8,6 +8,7 @@ import ReportDay from "./pages/ReportDay"
 import ThuChi from "./pages/ThuChi"
 import KhoiTaoDauKy from "./pages/KhoiTaoDauKy"
 import Activity from "./pages/Activity"
+import CancelPage from "./pages/CancelPage"   // 🔥 THÊM
 // ✅ QUAN TRỌNG: phải đúng tên file
 import AIPage from "./pages/AIPage"
 
@@ -52,10 +53,19 @@ function App() {
         path="/khoi-tao-dau-ky"
         element={token ? <KhoiTaoDauKy /> : <Navigate to="/login" />}
       />
+
+      {/* 🔥 GIỮ NGUYÊN ACTIVITY (KHÔNG ĐỤNG) */}
       <Route
         path="/activity"
         element={token ? <Activity /> : <Navigate to="/login" />}
       />
+
+      {/* 🔥 ROUTE MỚI CHO HUỶ */}
+      <Route
+        path="/huy-hoa-don"
+        element={token ? <CancelPage /> : <Navigate to="/login" />}
+      />
+
       {/* ✅ THÊM AI */}
       <Route
         path="/ai"

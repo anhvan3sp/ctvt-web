@@ -59,7 +59,8 @@ function Layout({ children, vai_tro: roleProp }) {
               </Link>
             )}
 
-            <Link to="/activity" style={menuStyle("/activity")}>
+            {/* 🔥 CHUYỂN SANG CANCEL PAGE */}
+            <Link to="/huy-hoa-don" style={menuStyle("/huy-hoa-don")}>
               Huỷ hoá đơn
             </Link>
 
