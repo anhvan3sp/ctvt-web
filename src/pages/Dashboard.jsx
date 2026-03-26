@@ -30,17 +30,21 @@ function Dashboard() {
     )
   }
 
-  const format = (v) => (v || 0).toLocaleString("vi-VN")
+  const format = (v) => Number(v || 0).toLocaleString("vi-VN")
 
   return (
-    <Layout>
+    <Layout vai_tro={data.vai_tro}> {/* 🔥 truyền xuống */}
 
       <h1>Bảng Điều Khiển</h1>
 
       {/* 🔥 TÊN NGƯỜI */}
-      <p>Chào <b>{data.ten_nv}</b></p>
+      <p>
+        Chào <b>{data.ten_nv || "..."}</b>
+      </p>
 
       <br />
+
+      {/* ================= QUỸ ================= */}
 
       {data.loai === "cong_ty" && (
         <>
@@ -48,20 +52,27 @@ function Dashboard() {
 
           <p>Tiền mặt: {format(data.tien_mat)} đ</p>
           <p>Tiền ngân hàng: {format(data.tien_ngan_hang)} đ</p>
-          <p><b>Tổng quỹ: {format(data.tong_quy)} đ</b></p>
+          <p>
+            <b>Tổng quỹ: {format(data.tong_quy)} đ</b>
+          </p>
         </>
       )}
 
       {data.loai === "nhan_vien" && (
-        <h3>Quỹ của bạn: {format(data.so_du)} đ</h3>
+        <h3>
+          Quỹ của bạn: {format(data.so_du)} đ
+        </h3>
       )}
 
       <br />
 
+      {/* ================= HÔM NAY ================= */}
+
       <div style={{
         border: "1px solid #ccc",
         padding: "20px",
-        width: "300px"
+        width: "320px",
+        borderRadius: "8px"
       }}>
 
         <h3>Hôm nay</h3>
@@ -69,10 +80,11 @@ function Dashboard() {
         {/* 🔥 PHÂN LOẠI BÁN */}
         <div>
           <b>Bán hàng:</b>
-          {data.ban_theo_loai?.length > 0 ? (
-            data.ban_theo_loai.map((b,i)=>(
+
+          {data.ban_theo_loai && data.ban_theo_loai.length > 0 ? (
+            data.ban_theo_loai.map((b, i) => (
               <div key={i}>
-                {b.ten}: {b.so_luong} bình
+                {b.ten}: {format(b.so_luong)} bình
               </div>
             ))
           ) : (
@@ -80,10 +92,13 @@ function Dashboard() {
           )}
         </div>
 
-        <hr/>
+        <hr />
 
-        <p><b>Tổng: {data.ban_hom_nay} bình</b></p>
+        <p>
+          <b>Tổng: {format(data.ban_hom_nay)} bình</b>
+        </p>
 
+        {/* 🔥 THU CHI */}
         <p>Thu: {format(data.thu_hom_nay)} đ</p>
         <p>Chi: {format(data.chi_hom_nay)} đ</p>
 

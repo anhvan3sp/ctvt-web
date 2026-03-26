@@ -1,8 +1,13 @@
 import { Link, useLocation } from "react-router-dom"
 
-function Layout({ children }) {
+function Layout({ children, vai_tro: roleProp }) {
 
   const location = useLocation()
+
+  // 🔥 ƯU TIÊN ROLE TỪ PROPS → fallback localStorage
+  const roleStorage = localStorage.getItem("vai_tro")
+
+  const vai_tro = (roleProp || roleStorage || "").toLowerCase()
 
   const handleLogout = () => {
     localStorage.removeItem("access_token")
@@ -47,15 +52,19 @@ function Layout({ children }) {
             <Link to="/thu-chi" style={menuStyle("/thu-chi")}>Thu chi</Link>
             <Link to="/report-day" style={menuStyle("/report-day")}>Báo cáo ngày</Link>
 
-            {/* ✅ thêm */}
-            <Link to="/khoi-tao-dau-ky" style={menuStyle("/khoi-tao-dau-ky")}>
-              Khởi tạo đầu kỳ
-            </Link>
+            {/* 🔥 CHỈ ADMIN MỚI THẤY */}
+            {vai_tro === "admin" && (
+              <Link to="/khoi-tao-dau-ky" style={menuStyle("/khoi-tao-dau-ky")}>
+                Khởi tạo đầu kỳ
+              </Link>
+            )}
+
             <Link to="/activity" style={menuStyle("/activity")}>
               Huỷ hoá đơn
             </Link>
+
             <Link to="/ai" style={menuStyle("/ai")}>
-             🤖 Trợ lý AI
+              🤖 Trợ lý AI
             </Link>
 
           </div>
