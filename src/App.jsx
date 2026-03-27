@@ -6,9 +6,16 @@ import Purchase from "./pages/Purchase"
 import Sale from "./pages/Sale"
 import ReportDay from "./pages/ReportDay"
 import ThuChi from "./pages/ThuChi"
+
+// ❗ FIX: bỏ khoảng trắng trong path
 import KhoiTaoDauKy from "./pages/KhoiTaoDauKy"
+
 import Activity from "./pages/Activity"
-import CancelPage from "./pages/CancelPage"   // 🔥 THÊM
+import CancelPage from "./pages/CancelPage"
+
+// 🔥 NEW
+import PhatSinh from "./pages/PhatSinh"
+
 // ✅ QUAN TRỌNG: phải đúng tên file
 import AIPage from "./pages/AIPage"
 
@@ -39,6 +46,13 @@ function App() {
         element={token ? <Sale /> : <Navigate to="/login" />}
       />
 
+      {/* 🔥 NEW: PHÁT SINH (MÀN CHÍNH) */}
+      <Route
+        path="/phat-sinh"
+        element={token ? <PhatSinh /> : <Navigate to="/login" />}
+      />
+
+      {/* 🔥 GIỮ NHƯNG CHỈ ADMIN SẼ THẤY MENU */}
       <Route
         path="/thu-chi"
         element={token ? <ThuChi /> : <Navigate to="/login" />}
@@ -54,19 +68,19 @@ function App() {
         element={token ? <KhoiTaoDauKy /> : <Navigate to="/login" />}
       />
 
-      {/* 🔥 GIỮ NGUYÊN ACTIVITY (KHÔNG ĐỤNG) */}
+      {/* 🔥 GIỮ NGUYÊN */}
       <Route
         path="/activity"
         element={token ? <Activity /> : <Navigate to="/login" />}
       />
 
-      {/* 🔥 ROUTE MỚI CHO HUỶ */}
+      {/* 🔥 HUỶ HOÁ ĐƠN */}
       <Route
         path="/huy-hoa-don"
         element={token ? <CancelPage /> : <Navigate to="/login" />}
       />
 
-      {/* ✅ THÊM AI */}
+      {/* ✅ AI */}
       <Route
         path="/ai"
         element={token ? <AIPage /> : <Navigate to="/login" />}

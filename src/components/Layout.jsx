@@ -47,19 +47,38 @@ function Layout({ children, vai_tro: roleProp }) {
           <div>
 
             <Link to="/" style={menuStyle("/")}>Bảng điều khiển</Link>
-            <Link to="/purchase" style={menuStyle("/purchase")}>Nhập hàng</Link>
-            <Link to="/sale" style={menuStyle("/sale")}>Bán hàng</Link>
-            <Link to="/thu-chi" style={menuStyle("/thu-chi")}>Thu chi</Link>
-            <Link to="/report-day" style={menuStyle("/report-day")}>Báo cáo ngày</Link>
 
-            {/* 🔥 CHỈ ADMIN MỚI THẤY */}
+            <Link to="/purchase" style={menuStyle("/purchase")}>
+              Nhập hàng
+            </Link>
+
+            <Link to="/sale" style={menuStyle("/sale")}>
+              Bán hàng
+            </Link>
+
+            {/* 🔥 NEW: PHÁT SINH (MENU CHÍNH) */}
+            <Link to="/phat-sinh" style={menuStyle("/phat-sinh")}>
+              Phát sinh
+            </Link>
+
+            {/* 🔥 CHỈ ADMIN MỚI THẤY THU CHI */}
+            {vai_tro === "admin" && (
+              <Link to="/thu-chi" style={menuStyle("/thu-chi")}>
+                Thu chi (Ledger)
+              </Link>
+            )}
+
+            <Link to="/report-day" style={menuStyle("/report-day")}>
+              Báo cáo ngày
+            </Link>
+
+            {/* 🔥 CHỈ ADMIN */}
             {vai_tro === "admin" && (
               <Link to="/khoi-tao-dau-ky" style={menuStyle("/khoi-tao-dau-ky")}>
                 Khởi tạo đầu kỳ
               </Link>
             )}
 
-            {/* 🔥 CHUYỂN SANG CANCEL PAGE */}
             <Link to="/huy-hoa-don" style={menuStyle("/huy-hoa-don")}>
               Huỷ hoá đơn
             </Link>
@@ -71,13 +90,16 @@ function Layout({ children, vai_tro: roleProp }) {
           </div>
         </div>
 
-        <button onClick={handleLogout} style={{
-          padding: "10px",
-          width: "100%",
-          border: "none",
-          background: "#e5e7eb",
-          cursor: "pointer"
-        }}>
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: "10px",
+            width: "100%",
+            border: "none",
+            background: "#e5e7eb",
+            cursor: "pointer"
+          }}
+        >
           Đăng xuất
         </button>
 

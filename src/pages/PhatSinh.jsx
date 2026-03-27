@@ -1,36 +1,28 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import api from "../api"
 import Layout from "../components/Layout"
 
-function ThuChi() {
-
-  // 🔥 LẤY ROLE
-  const vai_tro = (localStorage.getItem("vai_tro") || "").toLowerCase()
-
-  // 🔥 CHẶN KHÔNG PHẢI ADMIN
-  if (vai_tro !== "admin") {
-    return (
-      <Layout>
-        <h2>Thu chi (Ledger)</h2>
-        <p>Bạn không có quyền truy cập.</p>
-      </Layout>
-    )
-  }
+function PhatSinh() {
 
   const inputRefs = useRef([])
 
-  // 🔥 tạo row
+  // =========================
+  // CREATE ROW
+  // =========================
   const createRow = () => ({
     loai: "chi",
     loai_giao_dich: "do_dau",
     so_tien: "",
-    hinh_thuc: "tien_mat",
-    idempotency_key: crypto.randomUUID()
+    dien_giai: ""
   })
 
   const [rows, setRows] = useState([createRow()])
+  const [list, setList] = useState([])
   const [loading, setLoading] = useState(false)
 
+  // =========================
+  // OPTIONS
+  // =========================
   const thuOptions = [
     { value: "thu_khac", label: "Thu khác" },
     { value: "nop_them", label: "Nộp thêm" }
@@ -45,10 +37,26 @@ function ThuChi() {
     { value: "chi_khac", label: "Chi khác" }
   ]
 
+  // =========================
+  // LOAD DATA
+  // =========================
+  const loadToday = async () => {
+    try {
+      const res = await api.get("/phat-sinh/today")
+      setList(res.data)
+    } catch (err) {
+      alert("Lỗi load dữ liệu")
+    }
+  }
+
   useEffect(() => {
+    loadToday()
     inputRefs.current[0]?.focus()
   }, [])
 
+  // =========================
+  // UPDATE ROW
+  // =========================
   const update = (i, field, value) => {
     const newRows = [...rows]
     newRows[i][field] = value
@@ -58,13 +66,12 @@ function ThuChi() {
         value === "thu" ? "thu_khac" : "do_dau"
     }
 
-    if (field === "loai_giao_dich" && value === "nop_tien") {
-      newRows[i].hinh_thuc = "tien_mat"
-    }
-
     setRows(newRows)
   }
 
+  // =========================
+  // ADD / REMOVE ROW
+  // =========================
   const addRow = () => {
     setRows([...rows, createRow()])
 
@@ -77,19 +84,22 @@ function ThuChi() {
     setRows(rows.filter((_, idx) => idx !== i))
   }
 
-  // 🔥 SUBMIT 1 ROW
-  const submitRow = async (r, force = false) => {
-    return await api.post("/thu-chi-nv/create", {
+  // =========================
+  // CREATE NHÁP
+  // =========================
+  const submitRow = async (r) => {
+    return await api.post("/phat-sinh/create", {
+      ngay: new Date().toISOString().slice(0, 10),
       loai: r.loai,
       loai_giao_dich: r.loai_giao_dich,
       so_tien: Number(r.so_tien),
-      hinh_thuc: r.hinh_thuc,
-      idempotency_key: r.idempotency_key,
-      force
+      dien_giai: r.dien_giai
     })
   }
 
-  // 🔥 SUBMIT ALL
+  // =========================
+  // SUBMIT ALL
+  // =========================
   const handleSubmit = async () => {
 
     if (loading) return
@@ -98,38 +108,16 @@ function ThuChi() {
     try {
 
       for (let r of rows) {
-
         if (!r.so_tien) continue
-
-        try {
-
-          await submitRow(r)
-
-        } catch (err) {
-
-          // 🔥 DUPLICATE → confirm
-          if (err.response?.status === 409) {
-
-            const msg = err.response?.data?.detail
-
-            const ok = window.confirm(msg + "\n\nOK = Vẫn nhập\nCancel = Bỏ")
-
-            if (ok) {
-              await submitRow(r, true)
-            } else {
-              continue
-            }
-
-          } else {
-            throw err
-          }
-        }
+        await submitRow(r)
       }
 
-      alert("OK")
+      alert("Đã lưu nháp")
 
       setRows([createRow()])
       inputRefs.current[0]?.focus()
+
+      loadToday()
 
     } catch (err) {
 
@@ -144,6 +132,37 @@ function ThuChi() {
     }
   }
 
+  // =========================
+  // CONFIRM
+  // =========================
+  const confirm = async (id) => {
+    try {
+      await api.post("/phat-sinh/confirm", { id })
+      loadToday()
+    } catch (err) {
+      alert(err.response?.data?.detail || "Lỗi xác nhận")
+    }
+  }
+
+  // =========================
+  // CANCEL
+  // =========================
+  const cancel = async (id) => {
+
+    const ok = window.confirm("Huỷ sẽ đảo tiền. Tiếp tục?")
+    if (!ok) return
+
+    try {
+      await api.post("/phat-sinh/cancel", { id })
+      loadToday()
+    } catch (err) {
+      alert(err.response?.data?.detail || "Lỗi huỷ")
+    }
+  }
+
+  // =========================
+  // KEYBOARD
+  // =========================
   const handleKeyDown = (e, i) => {
     if (e.key === "Enter") {
       if (i === rows.length - 1) {
@@ -154,11 +173,15 @@ function ThuChi() {
     }
   }
 
+  // =========================
+  // RENDER
+  // =========================
   return (
     <Layout>
 
-      <h2>Thu chi (Ledger - Admin only)</h2>
+      <h2>Phát sinh</h2>
 
+      {/* ================= FORM ================= */}
       {rows.map((r, i) => {
 
         const options = r.loai === "thu" ? thuOptions : chiOptions
@@ -191,17 +214,16 @@ function ThuChi() {
               onChange={(e) => update(i, "so_tien", e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, i)}
               type="number"
+              placeholder="Số tiền"
               style={{ width: "120px" }}
             />
 
-            <select
-              value={r.hinh_thuc}
-              onChange={(e) => update(i, "hinh_thuc", e.target.value)}
-              disabled={r.loai_giao_dich === "nop_tien"}
-            >
-              <option value="tien_mat">Tiền mặt</option>
-              <option value="chuyen_khoan">Chuyển khoản</option>
-            </select>
+            <input
+              value={r.dien_giai}
+              onChange={(e) => update(i, "dien_giai", e.target.value)}
+              placeholder="Diễn giải"
+              style={{ width: "200px" }}
+            />
 
             <button onClick={() => removeRow(i)}>X</button>
 
@@ -214,11 +236,45 @@ function ThuChi() {
       <br /><br />
 
       <button onClick={handleSubmit} disabled={loading}>
-        {loading ? "Đang lưu..." : "Lưu tất cả"}
+        {loading ? "Đang lưu..." : "Lưu nháp"}
       </button>
+
+      <hr />
+
+      {/* ================= LIST ================= */}
+      <h3>Hôm nay</h3>
+
+      {list.map(item => (
+
+        <div key={item.id} style={{
+          borderBottom: "1px solid #ccc",
+          padding: "5px"
+        }}>
+
+          <b>{item.loai.toUpperCase()}</b> |
+          {" "}{Number(item.so_tien).toLocaleString()} |
+          {" "}{item.loai_giao_dich} |
+          {" "}{item.trang_thai}
+
+          {" "}
+
+          {item.trang_thai === "nhap" && (
+            <button onClick={() => confirm(item.id)}>
+              Xác nhận
+            </button>
+          )}
+
+          {item.trang_thai === "xac_nhan" && (
+            <button onClick={() => cancel(item.id)}>
+              Huỷ
+            </button>
+          )}
+
+        </div>
+      ))}
 
     </Layout>
   )
 }
 
-export default ThuChi
+export default PhatSinh
