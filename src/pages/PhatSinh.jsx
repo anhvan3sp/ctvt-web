@@ -85,20 +85,21 @@ function PhatSinh() {
   }
 
   // =========================
-  // CREATE NHÁP
+  // CREATE NHÁP (THÊM FORCE)
   // =========================
-  const submitRow = async (r) => {
+  const submitRow = async (r, force = false) => {
     return await api.post("/phat-sinh/create", {
       ngay: new Date().toISOString().slice(0, 10),
       loai: r.loai,
       loai_giao_dich: r.loai_giao_dich,
       so_tien: Number(r.so_tien),
-      dien_giai: r.dien_giai
+      dien_giai: r.dien_giai,
+      force // 🔥 thêm
     })
   }
 
   // =========================
-  // SUBMIT ALL
+  // SUBMIT ALL (WARNING FLOW)
   // =========================
   const handleSubmit = async () => {
 
@@ -109,7 +110,22 @@ function PhatSinh() {
 
       for (let r of rows) {
         if (!r.so_tien) continue
-        await submitRow(r)
+
+        const res = await submitRow(r)
+
+        // 🔥 HANDLE WARNING
+        if (res.data?.warning) {
+
+          const ok = window.confirm(
+            res.data.message + "\nVẫn lưu?"
+          )
+
+          if (ok) {
+            await submitRow(r, true)
+          } else {
+            continue
+          }
+        }
       }
 
       alert("Đã lưu nháp")
@@ -145,11 +161,11 @@ function PhatSinh() {
   }
 
   // =========================
-  // CANCEL
+  // CANCEL (HUỶ - chuyển trạng thái)
   // =========================
   const cancel = async (id) => {
 
-    const ok = window.confirm("Huỷ sẽ đảo tiền. Tiếp tục?")
+    const ok = window.confirm("Huỷ sẽ chuyển trạng thái, không xoá dữ liệu. Tiếp tục?")
     if (!ok) return
 
     try {
@@ -157,6 +173,22 @@ function PhatSinh() {
       loadToday()
     } catch (err) {
       alert(err.response?.data?.detail || "Lỗi huỷ")
+    }
+  }
+
+  // =========================
+  // DELETE DRAFT (XOÁ THẬT)
+  // =========================
+  const deleteDraft = async (id) => {
+
+    const ok = window.confirm("Xoá nháp sẽ mất dữ liệu. Tiếp tục?")
+    if (!ok) return
+
+    try {
+      await api.post("/phat-sinh/delete", { id })
+      loadToday()
+    } catch (err) {
+      alert(err.response?.data?.detail || "Lỗi xoá")
     }
   }
 
@@ -258,12 +290,20 @@ function PhatSinh() {
 
           {" "}
 
+          {/* NHÁP */}
           {item.trang_thai === "nhap" && (
-            <button onClick={() => confirm(item.id)}>
-              Xác nhận
-            </button>
+            <>
+              <button onClick={() => confirm(item.id)}>
+                Xác nhận
+              </button>
+
+              <button onClick={() => deleteDraft(item.id)}>
+                Xoá
+              </button>
+            </>
           )}
 
+          {/* ĐÃ XÁC NHẬN */}
           {item.trang_thai === "xac_nhan" && (
             <button onClick={() => cancel(item.id)}>
               Huỷ
