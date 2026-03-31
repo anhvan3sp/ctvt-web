@@ -33,6 +33,21 @@ function Sale() {
   const [tienMat, setTienMat] = useState(0)
   const [tienCK, setTienCK] = useState(0)
 
+  // ===== TODAY =====
+  const [todayList, setTodayList] = useState([])
+
+  const loadToday = async () => {
+    try {
+      const res = await axios.get(
+        "https://ctvt-core-api.onrender.com/sale/today",
+        { headers }
+      )
+      setTodayList(res.data)
+    } catch {
+      setTodayList([])
+    }
+  }
+
   useEffect(() => {
 
     axios.get("https://ctvt-core-api.onrender.com/customer/", { headers })
@@ -74,6 +89,8 @@ function Sale() {
         }
       })
 
+    loadToday()
+
   }, [])
 
   const filteredCustomers = customers.filter(c =>
@@ -95,7 +112,6 @@ function Sale() {
     0
   )
 
-  // ===== FIX CHÍNH Ở ĐÂY =====
   const handleSubmit = async (force = false) => {
 
     if (!maKH || !maKho) {
@@ -128,30 +144,47 @@ function Sale() {
         { headers }
       )
 
-      alert("Bán hàng thành công")
-      window.location.reload()
+      alert("Đã lưu nháp")
+      loadToday()
 
     } catch (err) {
 
-      // ✅ CHẶN LOOP + FORCE ĐÚNG
       if (err.response?.status === 409 && !force) {
-
         const ok = window.confirm("Hoá đơn trùng. Vẫn tạo?")
-
-        if (ok) {
-          await handleSubmit(true)   // 🔥 FIX QUAN TRỌNG
-        }
-
+        if (ok) await handleSubmit(true)
       } else {
-        console.error(err.response?.data)
         alert("Lỗi khi lưu")
       }
+    }
+  }
 
+  const handleConfirm = async (id) => {
+    try {
+      await axios.post(
+        `https://ctvt-core-api.onrender.com/sale/confirm?id=${id}`,
+        {},
+        { headers }
+      )
+      loadToday()
+    } catch {
+      alert("Lỗi xác nhận")
+    }
+  }
+
+  const handleCancel = async (id) => {
+    try {
+      await axios.post(
+        `https://ctvt-core-api.onrender.com/sale/cancel?id=${id}`,
+        {},
+        { headers }
+      )
+      loadToday()
+    } catch {
+      alert("Lỗi huỷ")
     }
   }
 
   const handlePrintInvoice = () => {
-
     if (!maKH) {
       alert("Chọn khách hàng trước")
       return
@@ -171,39 +204,12 @@ function Sale() {
 
     win.document.write(`
       <html>
-      <head>
-        <title>Thông tin viết hóa đơn</title>
-        <style>
-          body{font-family: Arial;padding:80px;font-size:32px;}
-          h1{text-align:center;margin-bottom:60px;}
-          .row{margin:30px 0;}
-          .label{font-weight:bold;display:inline-block;width:320px;}
-          .money{font-size:40px;font-weight:bold;color:red;}
-        </style>
-      </head>
-      <body>
-
-        <h1>THÔNG TIN VIẾT HÓA ĐƠN ĐỎ</h1>
-
-        <div class="row">
-          <span class="label">Tên khách hàng:</span>
-          ${ten}
-        </div>
-
-        <div class="row">
-          <span class="label">Địa chỉ:</span>
-          ${diaChi}
-        </div>
-
-        <div class="row">
-          <span class="label">Mã số thuế:</span>
-          ${mst}
-        </div>
-
-        <div class="row money">
-          Tổng tiền thanh toán: ${tongTien.toLocaleString()}
-        </div>
-
+      <body style="font-family: Arial; padding:80px; font-size:32px;">
+        <h1>HÓA ĐƠN</h1>
+        <div>${ten}</div>
+        <div>${diaChi}</div>
+        <div>${mst}</div>
+        <h2>${tongTien.toLocaleString()}</h2>
       </body>
       </html>
     `)
@@ -215,6 +221,7 @@ function Sale() {
     <div>
       <h2>Bán hàng</h2>
 
+      {/* ===== FORM GIỮ NGUYÊN ===== */}
       <div style={{ marginBottom: "15px" }}>
         <input type="date" value={ngay} onChange={e => setNgay(e.target.value)} />
 
@@ -226,13 +233,8 @@ function Sale() {
           style={{ marginLeft: "10px", width: "200px" }}
         />
 
-        <select
-          value={maKH}
-          onChange={(e) => setMaKH(e.target.value)}
-          style={{ marginLeft: "10px", width: "200px" }}
-        >
+        <select value={maKH} onChange={(e) => setMaKH(e.target.value)} style={{ marginLeft: "10px", width: "200px" }}>
           <option value="">Chọn khách</option>
-
           {filteredCustomers.map(c => (
             <option key={c.id} value={c.ma_kh}>
               {c.ten_cua_hang}
@@ -240,13 +242,8 @@ function Sale() {
           ))}
         </select>
 
-        <select
-          value={maKho}
-          onChange={e => setMaKho(e.target.value)}
-          style={{ marginLeft: "10px" }}
-        >
+        <select value={maKho} onChange={e => setMaKho(e.target.value)} style={{ marginLeft: "10px" }}>
           <option value="">Chọn kho</option>
-
           {warehouses.map(w => (
             <option key={w.id} value={w.ma_kho}>
               {w.ten_kho}
@@ -255,6 +252,7 @@ function Sale() {
         </select>
       </div>
 
+      {/* ===== TABLE SP GIỮ NGUYÊN ===== */}
       <table border="1" cellPadding="5">
         <thead>
           <tr>
@@ -269,12 +267,8 @@ function Sale() {
           {items.map((item, index) => (
             <tr key={index}>
               <td>
-                <select
-                  value={item.ma_sp}
-                  onChange={e => handleItemChange(index, "ma_sp", e.target.value)}
-                >
+                <select value={item.ma_sp} onChange={e => handleItemChange(index, "ma_sp", e.target.value)}>
                   <option value="">Chọn SP</option>
-
                   {products.map(p => (
                     <option key={p.id} value={p.ma_sp}>
                       {p.ten_sp}
@@ -284,17 +278,13 @@ function Sale() {
               </td>
 
               <td>
-                <input
-                  type="number"
-                  value={item.so_luong}
+                <input type="number" value={item.so_luong}
                   onChange={e => handleItemChange(index, "so_luong", Number(e.target.value))}
                 />
               </td>
 
               <td>
-                <input
-                  type="number"
-                  value={item.don_gia}
+                <input type="number" value={item.don_gia}
                   onChange={e => handleItemChange(index, "don_gia", Number(e.target.value))}
                 />
               </td>
@@ -307,43 +297,80 @@ function Sale() {
         </tbody>
       </table>
 
-      <button onClick={addRow} style={{ marginTop: "10px" }}>
-        Thêm dòng
-      </button>
+      <button onClick={addRow} style={{ marginTop: "10px" }}>Thêm dòng</button>
 
-      <div style={{ marginTop: "20px" }}>
-        <h3>Tổng tiền: {tongTien.toLocaleString()}</h3>
+      <h3>Tổng tiền: {tongTien.toLocaleString()}</h3>
 
-        <div>
-          Tiền mặt:
-          <input
-            type="number"
-            value={tienMat}
-            onChange={e => setTienMat(Number(e.target.value))}
-          />
-        </div>
+      <div>
+        Tiền mặt:
+        <input type="number" value={tienMat} onChange={e => setTienMat(Number(e.target.value))} />
+      </div>
 
-        <div>
-          Chuyển khoản:
-          <input
-            type="number"
-            value={tienCK}
-            onChange={e => setTienCK(Number(e.target.value))}
-          />
-        </div>
+      <div>
+        Chuyển khoản:
+        <input type="number" value={tienCK} onChange={e => setTienCK(Number(e.target.value))} />
       </div>
 
       <div style={{ marginTop: "15px" }}>
-        <button onClick={() => handleSubmit()}>
-          Lưu hóa đơn
-        </button>
-
-        <button
-          onClick={handlePrintInvoice}
-          style={{ marginLeft: "10px" }}
-        >
+        <button onClick={() => handleSubmit()}>Lưu hóa đơn</button>
+        <button onClick={handlePrintInvoice} style={{ marginLeft: "10px" }}>
           Xuất hóa đơn đỏ
         </button>
+      </div>
+
+      {/* =========================
+          ✅ TODAY TABLE (CHUẨN ERP)
+      ========================= */}
+      <div style={{ marginTop: "30px" }}>
+        <h3>Hôm nay</h3>
+
+        <table border="1" cellPadding="6" style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Khách</th>
+              <th>Sản phẩm</th>
+              <th>SL</th>
+              <th>Giá</th>
+              <th>TT</th>
+              <th>Tổng</th>
+              <th>Trạng thái</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {todayList.map(bill =>
+              bill.items.map((it, index) => (
+                <tr key={`${bill.id}-${index}`}>
+
+                  {index === 0 && <td rowSpan={bill.items.length}>{bill.id}</td>}
+                  {index === 0 && <td rowSpan={bill.items.length}>{bill.ten_kh}</td>}
+
+                  <td>{it.ten_sp}</td>
+                  <td>{it.so_luong}</td>
+                  <td>{it.don_gia}</td>
+                  <td>{it.thanh_tien}</td>
+
+                  {index === 0 && <td rowSpan={bill.items.length}>{bill.tong_tien}</td>}
+                  {index === 0 && <td rowSpan={bill.items.length}>{bill.trang_thai}</td>}
+
+                  {index === 0 && (
+                    <td rowSpan={bill.items.length}>
+                      {bill.trang_thai === "nhap" && (
+                        <>
+                          <button onClick={() => handleConfirm(bill.id)}>Xác nhận</button>
+                          <button onClick={() => handleCancel(bill.id)}>Huỷ</button>
+                        </>
+                      )}
+                    </td>
+                  )}
+
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
     </div>
