@@ -33,7 +33,6 @@ function Sale() {
   const [tienMat, setTienMat] = useState(0)
   const [tienCK, setTienCK] = useState(0)
 
-  // ===== TODAY =====
   const [todayList, setTodayList] = useState([])
 
   const loadToday = async () => {
@@ -121,8 +120,8 @@ function Sale() {
 
     const validItems = items.filter(i => i.ma_sp && i.so_luong > 0)
 
-    if (validItems.length === 0) {
-      alert("Chưa chọn sản phẩm")
+    if (validItems.length === 0 && (tienMat + tienCK <= 0)) {
+      alert("Chưa nhập dữ liệu")
       return
     }
 
@@ -221,7 +220,11 @@ function Sale() {
     <div>
       <h2>Bán hàng</h2>
 
-      {/* ===== FORM GIỮ NGUYÊN ===== */}
+      <p style={{ color: "gray" }}>
+        (Không chọn sản phẩm = trả nợ / đặt tiền)
+      </p>
+
+      {/* ===== FORM ===== */}
       <div style={{ marginBottom: "15px" }}>
         <input type="date" value={ngay} onChange={e => setNgay(e.target.value)} />
 
@@ -252,7 +255,7 @@ function Sale() {
         </select>
       </div>
 
-      {/* ===== TABLE SP GIỮ NGUYÊN ===== */}
+      {/* ===== TABLE SP ===== */}
       <table border="1" cellPadding="5">
         <thead>
           <tr>
@@ -318,9 +321,7 @@ function Sale() {
         </button>
       </div>
 
-      {/* =========================
-          ✅ TODAY TABLE (CHUẨN ERP)
-      ========================= */}
+      {/* ===== TODAY ===== */}
       <div style={{ marginTop: "30px" }}>
         <h3>Hôm nay</h3>
 
@@ -340,8 +341,31 @@ function Sale() {
           </thead>
 
           <tbody>
-            {todayList.map(bill =>
-              bill.items.map((it, index) => (
+            {todayList.map(bill => {
+
+              if (!bill.items || bill.items.length === 0) {
+                return (
+                  <tr key={bill.id}>
+                    <td>{bill.id}</td>
+                    <td>{bill.ten_kh}</td>
+                    <td colSpan="4" style={{ textAlign: "center", color: "green", fontWeight: "bold" }}>
+                      Trả nợ
+                    </td>
+                    <td>{bill.tong_tien}</td>
+                    <td>{bill.trang_thai}</td>
+                    <td>
+                      {bill.trang_thai === "nhap" && (
+                        <>
+                          <button onClick={() => handleConfirm(bill.id)}>Xác nhận</button>
+                          <button onClick={() => handleCancel(bill.id)}>Huỷ</button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                )
+              }
+
+              return bill.items.map((it, index) => (
                 <tr key={`${bill.id}-${index}`}>
 
                   {index === 0 && <td rowSpan={bill.items.length}>{bill.id}</td>}
@@ -368,7 +392,7 @@ function Sale() {
 
                 </tr>
               ))
-            )}
+            })}
           </tbody>
         </table>
       </div>
